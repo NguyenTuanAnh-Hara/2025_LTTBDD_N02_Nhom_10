@@ -47,6 +47,7 @@ class RecipeCardItem extends StatelessWidget {
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
                     colors: [
+                      // ignore: deprecated_member_use
                       Colors.black.withOpacity(0.8),
                       Colors.transparent,
                     ],

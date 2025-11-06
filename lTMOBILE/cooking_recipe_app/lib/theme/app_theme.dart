@@ -20,7 +20,7 @@ import 'package:flutter/material.dart';
           colorScheme: const ColorScheme.light(
             primary: primaryColor,
             secondary: primaryColor,
-            background: backgroundColor,
+            surface: backgroundColor,
           ),
         );
     
