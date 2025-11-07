@@ -23,7 +23,7 @@ class RecipeCardItem extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => DetailScreen(recipe: recipe),
+              builder: (context) => DetailScreen(recipe: recipe, heroTag: '',),
             ),
           );
         },

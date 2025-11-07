@@ -52,4 +52,6 @@ import 'package:flutter/material.dart';
           ),
         );
       }
+
+  static light() {}
     }
