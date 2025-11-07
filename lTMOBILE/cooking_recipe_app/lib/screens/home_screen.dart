@@ -1,7 +1,7 @@
 import 'package:cooking_recipe_app/data.dart/mock_data.dart';
+import 'package:cooking_recipe_app/data/mock_data.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cooking_recipe_app/data/mock_data.dart';
 import '../models/recipe.dart';
 import 'detail_screen.dart';
 
@@ -14,11 +14,35 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   RecipeCategory _selectedCategory = RecipeCategory.food;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String query) {
+    setState(() {
+      _searchQuery = query;
+    });
+  }
+
+  void _onCategorySelected(RecipeCategory category) {
+    setState(() {
+      _selectedCategory = category;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final filteredRecipes = mockRecipes.where((recipe) {
-      return recipe.category == _selectedCategory;
+      final categoryMatch = recipe.category == _selectedCategory;
+      final searchMatch = recipe.name
+          .toLowerCase()
+          .contains(_searchQuery.toLowerCase());
+      return categoryMatch && searchMatch;
     }).toList();
 
     return Scaffold(
@@ -42,15 +66,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         .headlineSmall
                         ?.copyWith(fontWeight: FontWeight.bold),
                   ),
+                  const SizedBox(height: 8),
                   Text(
-                    'Tìm công thức nấu ăn ngon nhất',
+                    'Tìm kiếm công thức bạn muốn',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 24),
-                  _buildCategoryTabs(),
+                  _buildCategoryToggle(),
                   const SizedBox(height: 24),
                   Text(
-                    'Công thức Phổ biến',
+                    _selectedCategory == RecipeCategory.food
+                        ? 'Món ăn Phổ biến'
+                        : 'Đồ uống Phổ biến',
                     style: Theme.of(context)
                         .textTheme
                         .titleLarge
@@ -69,72 +96,49 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildSearchBar() {
     return TextField(
+      controller: _searchController,
+      onChanged: _onSearchChanged,
       decoration: InputDecoration(
         hintText: 'Tìm kiếm món ăn...',
         prefixIcon: const Icon(Icons.search, color: Colors.grey),
+        suffixIcon: _searchQuery.isNotEmpty
+            ? IconButton(
+                icon: const Icon(Icons.clear, color: Colors.grey),
+                onPressed: () {
+                  _searchController.clear();
+                  _onSearchChanged('');
+                },
+              )
+            : null,
         filled: true,
-        fillColor: Colors.grey.shade200,
+        fillColor: Colors.grey[200],
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30.0),
+          borderRadius: BorderRadius.circular(12.0),
           borderSide: BorderSide.none,
         ),
-        contentPadding: EdgeInsets.zero,
+        contentPadding: const EdgeInsets.symmetric(vertical: 0),
       ),
     );
   }
 
-  Widget _buildCategoryTabs() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _buildCategoryButton(
-          context,
-          'Món ăn',
-          Icons.restaurant_menu,
-          RecipeCategory.food,
-        ),
-        _buildCategoryButton(
-          context,
-          'Đồ uống',
-          Icons.local_bar,
-          RecipeCategory.drink,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCategoryButton(
-    BuildContext context,
-    String title,
-    IconData icon,
-    RecipeCategory category,
-  ) {
-    final bool isSelected = _selectedCategory == category;
-    final color =
-        isSelected ? Theme.of(context).primaryColor : Colors.grey.shade400;
-
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedCategory = category;
-        });
-      },
-      child: Column(
+  Widget _buildCategoryToggle() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(12.0),
+      ),
+      child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
+          Expanded(
+            child: _buildCategoryButton(
+              'Món ăn',
+              RecipeCategory.food,
             ),
-            child: Icon(icon, size: 30, color: color),
           ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            style: TextStyle(
-              color: color,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          Expanded(
+            child: _buildCategoryButton(
+              'Đồ uống',
+              RecipeCategory.drink,
             ),
           ),
         ],
@@ -142,12 +146,35 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildCategoryButton(String title, RecipeCategory category) {
+    final isSelected = _selectedCategory == category;
+    return GestureDetector(
+      onTap: () => _onCategorySelected(category),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 12.0),
+        decoration: BoxDecoration(
+          color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        child: Text(
+          title,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildRecipeGrid(List<Recipe> recipes) {
     return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0).copyWith(bottom: 16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
       sliver: SliverGrid(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 250.0,
           mainAxisSpacing: 16.0,
           crossAxisSpacing: 16.0,
           childAspectRatio: 0.75,
@@ -166,21 +193,22 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildRecipeCard(
       BuildContext context, Recipe recipe, String heroTag) {
-    return GestureDetector(
+    return InkWell(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => DetailScreen(recipe: recipe, heroTag: heroTag),
+            builder: (context) =>
+                DetailScreen(recipe: recipe, heroTag: heroTag),
           ),
         );
       },
       child: Card(
         clipBehavior: Clip.antiAlias,
+        elevation: 4,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16.0),
+          borderRadius: BorderRadius.circular(10),
         ),
-        elevation: 3,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
