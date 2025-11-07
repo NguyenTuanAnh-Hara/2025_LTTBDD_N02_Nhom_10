@@ -8,6 +8,10 @@ plugins {
 android {
     namespace = "com.example.cooking_recipe_app"
     compileSdk = flutter.compileSdkVersion
+    
+    // ĐÃ SỬA LỖI: Chỉ định phiên bản Build Tools 36.1.0 để tìm thấy aapt
+    buildToolsVersion = "36.1.0" 
+    
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
