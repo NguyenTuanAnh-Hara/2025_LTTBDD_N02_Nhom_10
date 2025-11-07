@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../models/recipe.dart';
-import '../l10n/app_localizations.dart';
-import '../utils/localization_helper.dart';
+import '../l10n/app_localizations.dart'; 
+import '../utils/localization_helper.dart'; 
 
 class DetailScreen extends StatelessWidget {
   final Recipe recipe;
@@ -46,12 +45,12 @@ class DetailScreen extends StatelessWidget {
         centerTitle: false,
         background: Hero(
           tag: heroTag,
-          child: CachedNetworkImage(
-            imageUrl: recipe.imageUrl,
+          // SỬA LỖI ASSET: Thay CachedNetworkImage bằng Image.asset
+          child: Image.asset(
+            recipe.imageUrl,
             fit: BoxFit.cover,
-            placeholder: (context, url) =>
-                Container(color: Colors.grey[300]),
-            errorWidget: (context, url, error) => const Icon(Icons.error),
+            errorBuilder: (context, error, stackTrace) =>
+                Container(color: Colors.grey[300], child: const Icon(Icons.error)),
           ),
         ),
       ),
