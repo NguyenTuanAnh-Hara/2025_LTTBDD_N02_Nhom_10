@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/recipe.dart';
+import '../l10n/app_localizations.dart';
+import '../utils/localization_helper.dart';
 
 class DetailScreen extends StatelessWidget {
   final Recipe recipe;
@@ -13,16 +15,21 @@ class DetailScreen extends StatelessWidget {
       body: CustomScrollView(
         slivers: [
           _buildSliverAppBar(context),
-          _buildSectionTitle(context, 'Nguyên liệu'),
-          _buildIngredientsList(),
-          _buildSectionTitle(context, 'Các bước thực hiện'),
-          _buildStepsList(),
+          _buildSectionTitle(context, AppLocalizations.of(context)!.detailIngredients),
+          _buildIngredientsList(context),
+          _buildSectionTitle(context, AppLocalizations.of(context)!.detailSteps),
+          _buildStepsList(context),
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 20),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildSliverAppBar(BuildContext context) {
+    final recipeName = LocalizationHelper.getText(context, recipe.nameKey);
+
     return SliverAppBar(
       expandedHeight: 300.0,
       floating: false,
@@ -30,7 +37,7 @@ class DetailScreen extends StatelessWidget {
       elevation: 0,
       flexibleSpace: FlexibleSpaceBar(
         title: Text(
-          recipe.name,
+          recipeName,
           style: const TextStyle(shadows: [
             Shadow(color: Colors.black54, blurRadius: 8, offset: Offset(0, 2))
           ]),
@@ -43,7 +50,7 @@ class DetailScreen extends StatelessWidget {
             imageUrl: recipe.imageUrl,
             fit: BoxFit.cover,
             placeholder: (context, url) =>
-                Container(color: Colors.grey.shade300),
+                Container(color: Colors.grey[300]),
             errorWidget: (context, url, error) => const Icon(Icons.error),
           ),
         ),
@@ -67,19 +74,26 @@ class DetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildIngredientsList() {
+  Widget _buildIngredientsList(BuildContext context) {
+    final ingredients = LocalizationHelper.getList(context, recipe.ingredientKeys);
+
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('• ', style: TextStyle(fontSize: 16)),
+                Text('• ',
+                    style: TextStyle(
+                        fontSize: 16,
+                        color: Theme.of(context).primaryColor,
+                        fontWeight: FontWeight.bold)),
                 Expanded(
                   child: Text(
-                    recipe.ingredients[index],
+                    ingredients[index],
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
                 ),
@@ -87,12 +101,14 @@ class DetailScreen extends StatelessWidget {
             ),
           );
         },
-        childCount: recipe.ingredients.length,
+        childCount: ingredients.length,
       ),
     );
   }
 
-  Widget _buildStepsList() {
+  Widget _buildStepsList(BuildContext context) {
+    final steps = LocalizationHelper.getList(context, recipe.stepKeys);
+
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
@@ -104,23 +120,25 @@ class DetailScreen extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 14,
+                  backgroundColor: Theme.of(context).primaryColor,
                   child: Text(
                     '${index + 1}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    recipe.steps[index],
-                    style: Theme.of(context).textTheme.bodyLarge,
+                    steps[index],
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.4),
                   ),
                 ),
               ],
             ),
           );
         },
-        childCount: recipe.steps.length,
+        childCount: steps.length,
       ),
     );
   }

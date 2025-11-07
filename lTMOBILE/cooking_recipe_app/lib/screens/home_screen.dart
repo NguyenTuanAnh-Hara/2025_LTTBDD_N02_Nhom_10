@@ -1,9 +1,12 @@
 import 'package:cooking_recipe_app/data.dart/mock_data.dart';
-import 'package:cooking_recipe_app/data/mock_data.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../data/mock_data.dart';
 import '../models/recipe.dart';
 import 'detail_screen.dart';
+import '../l10n/app_localizations.dart';
+import '../utils/localization_helper.dart';
+import 'dart:math';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -39,9 +42,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final filteredRecipes = mockRecipes.where((recipe) {
       final categoryMatch = recipe.category == _selectedCategory;
-      final searchMatch = recipe.name
-          .toLowerCase()
-          .contains(_searchQuery.toLowerCase());
+      final recipeName = LocalizationHelper.getText(context, recipe.nameKey);
+      final searchMatch = recipeName.toLowerCase().contains(
+        _searchQuery.toLowerCase(),
+      );
       return categoryMatch && searchMatch;
     }).toList();
 
@@ -60,30 +64,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Chào mừng!',
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                    AppLocalizations.of(context)!.homeWelcome,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Tìm kiếm công thức bạn muốn',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                   _buildCategoryToggle(),
-                  const SizedBox(height: 24),
-                  Text(
-                    _selectedCategory == RecipeCategory.food
-                        ? 'Món ăn Phổ biến'
-                        : 'Đồ uống Phổ biến',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge
-                        ?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -99,24 +87,15 @@ class _HomeScreenState extends State<HomeScreen> {
       controller: _searchController,
       onChanged: _onSearchChanged,
       decoration: InputDecoration(
-        hintText: 'Tìm kiếm món ăn...',
+        hintText: AppLocalizations.of(context)!.homeSearchHint,
         prefixIcon: const Icon(Icons.search, color: Colors.grey),
-        suffixIcon: _searchQuery.isNotEmpty
-            ? IconButton(
-                icon: const Icon(Icons.clear, color: Colors.grey),
-                onPressed: () {
-                  _searchController.clear();
-                  _onSearchChanged('');
-                },
-              )
-            : null,
         filled: true,
         fillColor: Colors.grey[200],
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.0),
+          borderRadius: BorderRadius.circular(30.0),
           borderSide: BorderSide.none,
         ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 0),
+        contentPadding: EdgeInsets.zero,
       ),
     );
   }
@@ -125,21 +104,18 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(12.0),
+        borderRadius: BorderRadius.circular(30.0),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: _buildCategoryButton(
-              'Món ăn',
-              RecipeCategory.food,
-            ),
+          _buildCategoryButton(
+            AppLocalizations.of(context)!.homeCategoryFood,
+            RecipeCategory.food,
           ),
-          Expanded(
-            child: _buildCategoryButton(
-              'Đồ uống',
-              RecipeCategory.drink,
-            ),
+          _buildCategoryButton(
+            AppLocalizations.of(context)!.homeCategoryDrink,
+            RecipeCategory.drink,
           ),
         ],
       ),
@@ -147,22 +123,26 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCategoryButton(String title, RecipeCategory category) {
-    final isSelected = _selectedCategory == category;
-    return GestureDetector(
-      onTap: () => _onCategorySelected(category),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 12.0),
-        decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(12.0),
-        ),
-        child: Text(
-          title,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.black,
-            fontWeight: FontWeight.bold,
+    final bool isSelected = _selectedCategory == category;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _onCategorySelected(category),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? Theme.of(context).primaryColor
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(30.0),
+          ),
+          child: Center(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: isSelected ? Colors.white : Colors.grey[600],
+              ),
+            ),
           ),
         ),
       ),
@@ -171,44 +151,39 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildRecipeGrid(List<Recipe> recipes) {
     return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+      padding: const EdgeInsets.all(16.0),
       sliver: SliverGrid(
         gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 250.0,
+          maxCrossAxisExtent: 200.0,
           mainAxisSpacing: 16.0,
           crossAxisSpacing: 16.0,
           childAspectRatio: 0.75,
         ),
-        delegate: SliverChildBuilderDelegate(
-          (BuildContext context, int index) {
-            final recipe = recipes[index];
-            final heroTag = 'recipe-${recipe.id}-$index';
-            return _buildRecipeCard(context, recipe, heroTag);
-          },
-          childCount: recipes.length,
-        ),
+        delegate: SliverChildBuilderDelegate((BuildContext context, int index) {
+          return _buildRecipeCard(context, recipes[index]);
+        }, childCount: recipes.length),
       ),
     );
   }
 
-  Widget _buildRecipeCard(
-      BuildContext context, Recipe recipe, String heroTag) {
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                DetailScreen(recipe: recipe, heroTag: heroTag),
-          ),
-        );
-      },
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+  Widget _buildRecipeCard(BuildContext context, Recipe recipe) {
+    final heroTag = '${recipe.id}_${Random().nextInt(9999)}';
+    final recipeName = LocalizationHelper.getText(context, recipe.nameKey);
+
+    return Card(
+      elevation: 4,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  DetailScreen(recipe: recipe, heroTag: heroTag),
+            ),
+          );
+        },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -219,33 +194,32 @@ class _HomeScreenState extends State<HomeScreen> {
                   imageUrl: recipe.imageUrl,
                   fit: BoxFit.cover,
                   placeholder: (context, url) =>
-                      const Center(child: CircularProgressIndicator()),
-                  errorWidget: (context, url, error) =>
-                      const Icon(Icons.error),
+                      Container(color: Colors.grey[300]),
+                  errorWidget: (context, url, error) => const Icon(Icons.error),
                 ),
               ),
             ),
             Padding(
               padding: const EdgeInsets.all(12.0),
               child: Text(
-                recipe.name,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                recipeName,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0)
-                  .copyWith(bottom: 12.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12.0,
+              ).copyWith(bottom: 12.0),
               child: Row(
                 children: [
-                  const Icon(Icons.timer_outlined,
-                      size: 16, color: Colors.grey),
+                  Icon(Icons.timer_outlined, size: 16, color: Colors.grey[600]),
                   const SizedBox(width: 4),
                   Text(
-                    '${recipe.durationInMinutes} phút',
+                    '${recipe.durationInMinutes} ${AppLocalizations.of(context)!.homeMinutes}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
